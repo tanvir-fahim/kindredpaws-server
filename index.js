@@ -26,9 +26,33 @@ async function run() {
     await client.connect();
     console.log("Successfully connected to MongoDB Atlas!");
 
-    
+
     const database = client.db("kindredPawsDB");
     const petsCollection = database.collection("pets");
+
+    app.post('/api/pets', async (req, res) => {
+      try {
+        const newPet = req.body;
+
+        if (!newPet.name || !newPet.species || !newPet.location) {
+          return res.status(400).json({ message: "Missing required fields (Name, Species, or Location)" });
+        }
+
+        if (newPet.adoptionFee) {
+          newPet.adoptionFee = parseFloat(newPet.adoptionFee) || 0;
+        }
+
+        const result = await petsCollection.insertOne(newPet);
+        res.status(201).json({
+          success: true,
+          message: "Pet recorded safely!",
+          insertedId: result.insertedId
+        });
+      } catch (error) {
+        console.error("Database insert error:", error);
+        res.status(500).json({ message: "Internal Server Error saving pet listing" });
+      }
+    });
 
 
   } catch (error) {
